@@ -23,6 +23,7 @@ def main(argv=None):
     p_audit.add_argument("--secondary", type=float, default=15.1)
     p_audit.add_argument("--critical", action="store_true")
     p_audit.add_argument("--status", default="DISCORDANT")
+    p_audit.add_argument("--json", action="store_true", help="Output evaluation result as formatted JSON")
 
     # Chat
     p_chat = subparsers.add_parser("chat", help="System configuration query")
@@ -50,6 +51,10 @@ def main(argv=None):
             is_critical_flag=args.critical,
         )
         dossier = coordinator.process(payload)
+        if getattr(args, "json", False):
+            print(json.dumps(dossier, indent=2))
+            return 0
+
         print("=" * 80)
         print(f"  ADAPTIVETRIAL-MIND: O'BRIEN-FLEMING & POCOCK INTERIM STOPPING BOUNDARY")
         print(f"  Domain: Biostatistics | Standard: FDA Adaptive Clinical Trial Guidelines")

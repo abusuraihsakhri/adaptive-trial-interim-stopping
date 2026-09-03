@@ -1,105 +1,105 @@
-# Adaptive Trial Interim Stopping
+# Adaptive Trial Interim Stopping & Boundary Decision Support
 
-> **Domain:** Clinical Decision Support & Biomedical Computing  
-> **Reference Guidelines & Standards:** `Standard Clinical Formulations & ISO/IEC Quality Frameworks`
+A Python biostatistics library and CLI tool for adaptive clinical trial design, group sequential interim monitoring, and sample size re-estimation. Implements O'Brien-Fleming and Pocock stopping boundaries, Lan-DeMets alpha spending functions, conditional power estimation for futility termination, and blinded/unblinded sample size adjustments under FDA Adaptive Clinical Trial Guidelines.
 
-<div align="center">
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
-
-</div>
+Requires Python standard library only (zero external runtime dependencies).
 
 ---
 
-## 📖 What It Does
+## Features
 
-Adaptive Clinical Trial: O'Brien-Fleming & Pocock Interim Stopping Boundaries,
-Spending Functions, Sample Size Re-estimation, and Futility Assessment.
-
----
-
-## ⚙️ Key Capabilities & Algorithmic Modules
-
-### 🔬 Core Algorithmic & Evaluation Engines
-
-- **`BoundaryMethod`** — dedicated module for boundary method evaluation and state verification.
-- **`InterimLook`** — dedicated module for interim look evaluation and state verification.
-- **`StoppingBoundary`** — dedicated module for stopping boundary evaluation and state verification.
-- **`SpendingFunctionResult`** — dedicated module for spending function result evaluation and state verification.
-- **`FutilityAnalysis`** — dedicated module for futility analysis evaluation and state verification.
-- **`SampleSizeReestimate`** — dedicated module for sample size reestimate evaluation and state verification.
+- **Group Sequential Stopping Boundaries:**
+  - **O'Brien-Fleming (OBF):** Conservative early efficacy boundaries preserving overall type I error rate $\alpha$.
+  - **Pocock Boundaries:** Uniform critical z-value boundaries across all interim looks.
+- **Lan-DeMets Alpha Spending:** Flexible spending approaches ($\alpha^*(t)$) accommodating irregular look intervals and varying information fractions.
+- **Futility & Conditional Power Monitoring:** Computes conditional power given interim observed effect sizes and remaining information fraction to evaluate early futility stopping rules.
+- **Sample Size Re-estimation (SSR):**
+  - **Blinded SSR:** Adjusts total sample size based on pooled variance inflation.
+  - **Unblinded SSR:** Recalibrates target enrollment based on observed interim effect sizes.
+- **Multi-Agent Adaptive Trial Coordinator:** Evaluates multi-parameter clinical trial telemetry alerts across risk boundaries.
+- **Tabular Batch Processing:** Batch evaluation of trial interim looks and task records via CSV.
 
 ---
 
-## 💻 CLI Quickstart & Usage
+## Installation & Requirements
 
-### 1. Guided Interactive Mode
+- Python 3.10+ (tested on 3.10, 3.11, 3.12)
+- Zero external runtime dependencies. `pytest` is optional for running the unit tests.
+
 ```bash
-python cli.py
+git clone https://github.com/abusuraihsakhri/adaptive-trial-interim-stopping.git
+cd adaptive-trial-interim-stopping
 ```
 
-### 2. Direct Parameterized Evaluation
+---
+
+## CLI Usage
+
+### 1. Single Task / Look Evaluation
+Run interim audit on trial parameters:
 ```bash
-python cli.py --task-id <value> --target <value> --primary <value> --secondary <value>
+python -m adaptive_trial.cli audit --task-id LOOK-01 --target ARM-B --primary 29.4 --secondary 15.1
+```
+Output as JSON:
+```bash
+python -m adaptive_trial.cli audit --task-id LOOK-01 --target ARM-B --primary 29.4 --secondary 15.1 --json
 ```
 
-### Parameter Reference
-- `--task-id`: Specifies input measurement or parameter value.
-- `--target`: Specifies input measurement or parameter value.
-- `--primary`: Specifies input measurement or parameter value.
-- `--secondary`: Specifies input measurement or parameter value.
-- `--critical`: Specifies input measurement or parameter value.
-- `--status`: Specifies input measurement or parameter value.
-- `--input`: Specifies input measurement or parameter value.
-- `--output`: Specifies input measurement or parameter value.
+### 2. Batch CSV Processing
+Process trial interim roster from CSV:
+```bash
+python -m adaptive_trial.cli batch -i sample.csv -o results.csv
+```
 
-### Input Data Schema
-
-| Field | Description | Requirement |
-|:------|:------------|:------------|
-| `task_id` | Parameter / observation metric | Required |
-| `target_identifier` | Parameter / observation metric | Required |
-| `primary_metric` | Parameter / observation metric | Required |
-| `secondary_metric` | Parameter / observation metric | Required |
-| `is_critical_flag` | Parameter / observation metric | Required |
-| `status_descriptor` | Parameter / observation metric | Required |
+### 3. Supervisory Query
+Query configuration and trial guidelines:
+```bash
+python -m adaptive_trial.cli chat "What standard is applied for stopping boundaries?"
+```
 
 ---
 
-## 🛡️ Security & Enterprise Architecture
+## Python API Quickstart
 
-* **Zero-PHI Outbound Interceptor:** Active AST and regex inspection blocking SSNs, MRNs, phone numbers, and patient identifiers.
-* **Tamper-Evident HMAC-SHA256 Audit Trail:** Chained, cryptographically signed logs for every evaluation and state transition.
-* **Air-Gapped LLM Reasoning Adapter:** Agnostic integration for local Ollama instances (`llama3`, `mistral`), Claude 3.5 Sonnet, GPT-4o, and deterministic test mocks.
-* **Active Learning Bayesian Calibration:** Dynamic tracker updating worker reliability weights and monitoring Brier calibration drift.
-* **FastAPI & Prometheus Telemetry:** Exposes OpenAPI 3.1 REST endpoints and operational Prometheus metrics (`/metrics`).
+```python
+from adaptive_boundaries import (
+    OBFlemingBoundary,
+    PocockBoundary,
+    LanDeMetsSpending,
+    FutilityAssessor,
+    SampleSizeReestimator,
+)
+
+# 1. Compute 5-look O'Brien-Fleming boundaries (alpha = 0.05)
+obf = OBFlemingBoundary(total_alpha=0.05, num_looks=5).compute_boundaries()
+for look in obf:
+    print(f"Look {look.look_number}: Z-bound = {look.z_bound}, alpha-spent = {look.alpha_spent}")
+
+# 2. Assess futility with conditional power at 50% information fraction
+futility = FutilityAssessor().assess(
+    observed_effect=0.35,
+    target_power=0.80,
+    information_fraction=0.50,
+    futility_threshold=0.10,
+)
+print(f"Futile: {futility.is_futile} | Conditional Power: {futility.conditional_power:.2%}")
+
+# 3. Blinded sample size re-estimation
+ssr = SampleSizeReestimator().blinded_reestimate(
+    initial_n=200,
+    current_variance=1.4,
+    expected_variance=1.0,
+)
+print(f"Revised N: {ssr.revised_n} (Inflation: {ssr.inflation_factor})")
+```
 
 ---
 
-## 🧪 Testing & Verification
+## Running Tests
 
-Run the automated test suite:
+Run the test suite using standard `pytest`:
 
 ```bash
 pytest -v
 ```
 
-Execute high-throughput batch simulation benchmarks:
-
-```bash
-python simulator.py --tasks 1000 --concurrency 8
-```
-
----
-
-## 🐳 Container Deployment
-
-```bash
-docker build -t adaptive-trial-interim-stopping .
-docker run -p 8000:8000 adaptive-trial-interim-stopping
-```

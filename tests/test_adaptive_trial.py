@@ -42,3 +42,41 @@ def test_coordinator():
 def test_cli():
     assert main(["audit", "--task-id", "CLI-01"]) == 0
     assert main(["chat", "What", "is", "the", "system", "status?"]) == 0
+    assert main(["audit", "--task-id", "CLI-02", "--json"]) == 0
+
+
+def test_cli_batch_sample_csv(tmp_path):
+    sample_csv = Path(__file__).resolve().parent.parent / "sample.csv"
+    out_file = tmp_path / "out.csv"
+    res = main(["batch", "-i", str(sample_csv), "-o", str(out_file)])
+    assert res == 0
+    assert out_file.exists()
+
+
+def test_adaptive_boundaries_direct():
+    from adaptive_boundaries import (
+        OBFlemingBoundary,
+        PocockBoundary,
+        LanDeMetsSpending,
+        FutilityAssessor,
+        SampleSizeReestimator,
+    )
+    obf = OBFlemingBoundary(total_alpha=0.05, num_looks=5).compute_boundaries()
+    assert len(obf) == 5
+    assert obf[0].z_bound > obf[-1].z_bound
+
+    poc = PocockBoundary(total_alpha=0.05, num_looks=5).compute_boundaries()
+    assert len(poc) == 5
+    assert poc[0].z_bound == poc[-1].z_bound
+
+    ldm = LanDeMetsSpending().compute_looks([0.2, 0.4, 0.6, 0.8, 1.0])
+    assert len(ldm.alpha_at_looks) == 5
+    assert ldm.total_alpha_spent > 0
+
+    fut = FutilityAssessor().assess(observed_effect=0.5, information_fraction=0.5)
+    assert not fut.is_futile
+    assert fut.conditional_power > 0.5
+
+    ssr = SampleSizeReestimator().blinded_reestimate(initial_n=100, current_variance=1.5, expected_variance=1.0)
+    assert ssr.revised_n == 150
+
