@@ -4,7 +4,7 @@ Adaptive Clinical Trial: O'Brien-Fleming & Pocock Interim Stopping Boundaries,
 Spending Functions, Sample Size Re-estimation, and Futility Assessment.
 """
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional
 import math
 from enum import Enum
 
@@ -63,6 +63,10 @@ class OBFlemingBoundary:
     """O'Brien-Fleming alpha spending function for group sequential designs."""
 
     def __init__(self, total_alpha: float = 0.05, num_looks: int = 5):
+        if not (0 < total_alpha < 1):
+            raise ValueError(f"total_alpha must be between 0 and 1, got {total_alpha}")
+        if num_looks < 1:
+            raise ValueError(f"num_looks must be >= 1, got {num_looks}")
         self.total_alpha = total_alpha
         self.num_looks = num_looks
 
@@ -113,6 +117,10 @@ class PocockBoundary:
     """Pocock alpha spending function with constant boundary values."""
 
     def __init__(self, total_alpha: float = 0.05, num_looks: int = 5):
+        if not (0 < total_alpha < 1):
+            raise ValueError(f"total_alpha must be between 0 and 1, got {total_alpha}")
+        if num_looks < 1:
+            raise ValueError(f"num_looks must be >= 1, got {num_looks}")
         self.total_alpha = total_alpha
         self.num_looks = num_looks
 
@@ -154,6 +162,12 @@ class LanDeMetsSpending:
 
     def compute_looks(self, information_fractions: List[float], alpha: float = 0.05,
                        method: str = "OBF") -> SpendingFunctionResult:
+        if not (0 < alpha < 1):
+            raise ValueError(f"alpha must be between 0 and 1, got {alpha}")
+        if not information_fractions:
+            raise ValueError("information_fractions must not be empty")
+        if any(not (0 < t <= 1) for t in information_fractions):
+            raise ValueError("information_fractions must be in (0, 1]")
         spending_fn = self.obf_spending if method == "OBF" else self.pocock_spending
         alpha_at_looks = []
         prev = 0.0
@@ -175,6 +189,12 @@ class FutilityAssessor:
     def assess(self, observed_effect: float, target_power: float = 0.8,
                information_fraction: float = 0.5, variance: float = 1.0,
                futility_threshold: float = 0.1) -> FutilityAnalysis:
+        if not (0 <= information_fraction <= 1):
+            raise ValueError(f"information_fraction must be in [0, 1], got {information_fraction}")
+        if not (0 <= target_power <= 1):
+            raise ValueError(f"target_power must be in [0, 1], got {target_power}")
+        if not (0 <= futility_threshold <= 1):
+            raise ValueError(f"futility_threshold must be in [0, 1], got {futility_threshold}")
         remaining_info = 1.0 - information_fraction
         if remaining_info <= 0 or variance <= 0:
             return FutilityAnalysis(False, 0, 0, "Insufficient information", futility_threshold)
@@ -210,7 +230,9 @@ class SampleSizeReestimator:
 
     def blinded_reestimate(self, initial_n: int, current_variance: float,
                             expected_variance: float, target_power: float = 0.8) -> SampleSizeReestimate:
-        if expected_variance <= 0:
+        if initial_n <= 0:
+            raise ValueError(f"initial_n must be positive, got {initial_n}")
+        if current_variance <= 0 or expected_variance <= 0:
             return SampleSizeReestimate(initial_n, initial_n, 1.0, "Invalid variance")
 
         inflation = current_variance / expected_variance
@@ -227,6 +249,8 @@ class SampleSizeReestimator:
     def unblinded_reestimate(self, initial_n: int, observed_effect: float,
                               expected_effect: float, alpha: float = 0.05,
                               target_power: float = 0.8) -> SampleSizeReestimate:
+        if initial_n <= 0:
+            raise ValueError(f"initial_n must be positive, got {initial_n}")
         if observed_effect <= 0 or expected_effect <= 0:
             return SampleSizeReestimate(initial_n, initial_n, 1.0, "Invalid effect sizes")
 

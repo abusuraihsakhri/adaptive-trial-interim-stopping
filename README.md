@@ -31,6 +31,12 @@ git clone https://github.com/abusuraihsakhri/adaptive-trial-interim-stopping.git
 cd adaptive-trial-interim-stopping
 ```
 
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `AUDIT_SECRET_KEY` | Secret key for HMAC-SHA256 audit trail signing. If not set, an ephemeral key is generated at runtime and a warning is emitted. | No (but recommended for production) |
+
 ---
 
 ## CLI Usage
@@ -95,6 +101,14 @@ print(f"Revised N: {ssr.revised_n} (Inflation: {ssr.inflation_factor})")
 
 ---
 
+## Security Features
+
+- **PHI Outbound Guard:** Detects and blocks protected health information (PHI) including MRNs, SSNs, email addresses, phone numbers, and patient names before any outbound transmission.
+- **HMAC-SHA256 Audit Trail:** Cryptographically signed, tamper-evident audit log chain for all task evaluations. Set `AUDIT_SECRET_KEY` environment variable for production deployments.
+- **Input Validation:** All boundary calculation and re-estimation functions validate parameters and raise descriptive errors for invalid inputs.
+
+---
+
 ## Running Tests
 
 Run the test suite using standard `pytest`:
@@ -102,4 +116,9 @@ Run the test suite using standard `pytest`:
 ```bash
 pytest -v
 ```
+
+The test suite includes:
+- `tests/test_adaptive_trial.py` — Core adaptive trial functionality, CLI, and boundary calculations
+- `tests/test_enrichment.py` — Enrichment engine feature tests
+- `tests/test_security_and_validation.py` — Security (PHI guard, audit trail) and input validation tests
 

@@ -6,7 +6,7 @@ import random
 import sys
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
-from agents.base import PHIGuard, SecurityException, AuditLogger
+from agents.base import AuditLogger, PHIGuard, SecurityException
 
 def run_simulation(iterations: int = 100):
     print(f"Starting Distributed Component Simulation on Adaptive Trial Interim Stopping ({iterations} tasks)...")

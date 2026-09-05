@@ -5,9 +5,9 @@ import argparse
 import csv
 import json
 import sys
+from agents.base import AuditLogger
 from agents.models import SystemTaskPayload
 from agents.supervisor import SystemSupervisor
-from agents.base import AuditLogger
 
 supervisor = SystemSupervisor(model_provider="mock")
 
