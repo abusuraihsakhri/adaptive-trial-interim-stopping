@@ -1,124 +1,92 @@
-# Adaptive Trial Interim Stopping & Boundary Decision Support
+# Adaptive Trial Interim Stopping
 
-A Python biostatistics library and CLI tool for adaptive clinical trial design, group sequential interim monitoring, and sample size re-estimation. Implements O'Brien-Fleming and Pocock stopping boundaries, Lan-DeMets alpha spending functions, conditional power estimation for futility termination, and blinded/unblinded sample size adjustments under FDA Adaptive Clinical Trial Guidelines.
+A Python library, command-line tool, and browser calculator for group-sequential efficacy boundaries and interim-monitoring calculations in clinical trials.
 
-Requires Python standard library only (zero external runtime dependencies).
-
----
+The statistical core uses the canonical joint-normal/Brownian-motion model to calibrate two-sided O'Brien-Fleming and Pocock efficacy boundaries for the requested alpha level, number of looks, and information fractions. It also provides Lan-DeMets alpha-spending functions, conditional-power calculations, and simple sample-size re-estimation utilities.
 
 ## Features
 
-- **Group Sequential Stopping Boundaries:**
-  - **O'Brien-Fleming (OBF):** Conservative early efficacy boundaries preserving overall type I error rate $\alpha$.
-  - **Pocock Boundaries:** Uniform critical z-value boundaries across all interim looks.
-- **Lan-DeMets Alpha Spending:** Flexible spending approaches ($\alpha^*(t)$) accommodating irregular look intervals and varying information fractions.
-- **Futility & Conditional Power Monitoring:** Computes conditional power given interim observed effect sizes and remaining information fraction to evaluate early futility stopping rules.
-- **Sample Size Re-estimation (SSR):**
-  - **Blinded SSR:** Adjusts total sample size based on pooled variance inflation.
-  - **Unblinded SSR:** Recalibrates target enrollment based on observed interim effect sizes.
-- **Multi-Agent Adaptive Trial Coordinator:** Evaluates multi-parameter clinical trial telemetry alerts across risk boundaries.
-- **Tabular Batch Processing:** Batch evaluation of trial interim looks and task records via CSV.
+- Two-sided O'Brien-Fleming and Pocock group-sequential efficacy boundaries.
+- Arbitrary strictly increasing information fractions.
+- Lan-DeMets O'Brien-Fleming-type and Pocock-type alpha spending.
+- Conditional power from an interim Z statistic under an explicit future-effect assumption.
+- Variance-ratio blinded and effect-ratio unblinded sample-size re-estimation utilities.
+- CSV batch processing from the command line.
+- Static browser calculator that runs locally and does not require a backend.
+- Optional FastAPI service for programmatic use.
 
----
+## Browser application
 
-## Installation & Requirements
+The browser application is in `web/`. All calculations run in the browser; entered values are not sent to a server by the application. The only browser storage used is `localStorage` for the light/dark theme preference.
 
-- Python 3.10+ (tested on 3.10, 3.11, 3.12)
-- Zero external runtime dependencies. `pytest` is optional for running the unit tests.
+## Installation
+
+Python 3.10 or later is required.
 
 ```bash
 git clone https://github.com/abusuraihsakhri/adaptive-trial-interim-stopping.git
 cd adaptive-trial-interim-stopping
+python -m pip install -e .
 ```
 
-## Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `AUDIT_SECRET_KEY` | Secret key for HMAC-SHA256 audit trail signing. If not set, an ephemeral key is generated at runtime and a warning is emitted. | No (but recommended for production) |
-
----
-
-## CLI Usage
-
-### 1. Single Task / Look Evaluation
-Run interim audit on trial parameters:
-```bash
-python -m adaptive_trial.cli audit --task-id LOOK-01 --target ARM-B --primary 29.4 --secondary 15.1
-```
-Output as JSON:
-```bash
-python -m adaptive_trial.cli audit --task-id LOOK-01 --target ARM-B --primary 29.4 --secondary 15.1 --json
-```
-
-### 2. Batch CSV Processing
-Process trial interim roster from CSV:
-```bash
-python -m adaptive_trial.cli batch -i sample.csv -o results.csv
-```
-
-### 3. Supervisory Query
-Query configuration and trial guidelines:
-```bash
-python -m adaptive_trial.cli chat "What standard is applied for stopping boundaries?"
-```
-
----
-
-## Python API Quickstart
-
-```python
-from adaptive_boundaries import (
-    OBFlemingBoundary,
-    PocockBoundary,
-    LanDeMetsSpending,
-    FutilityAssessor,
-    SampleSizeReestimator,
-)
-
-# 1. Compute 5-look O'Brien-Fleming boundaries (alpha = 0.05)
-obf = OBFlemingBoundary(total_alpha=0.05, num_looks=5).compute_boundaries()
-for look in obf:
-    print(f"Look {look.look_number}: Z-bound = {look.z_bound}, alpha-spent = {look.alpha_spent}")
-
-# 2. Assess futility with conditional power at 50% information fraction
-futility = FutilityAssessor().assess(
-    observed_effect=0.35,
-    target_power=0.80,
-    information_fraction=0.50,
-    futility_threshold=0.10,
-)
-print(f"Futile: {futility.is_futile} | Conditional Power: {futility.conditional_power:.2%}")
-
-# 3. Blinded sample size re-estimation
-ssr = SampleSizeReestimator().blinded_reestimate(
-    initial_n=200,
-    current_variance=1.4,
-    expected_variance=1.0,
-)
-print(f"Revised N: {ssr.revised_n} (Inflation: {ssr.inflation_factor})")
-```
-
----
-
-## Security Features
-
-- **PHI Outbound Guard:** Detects and blocks protected health information (PHI) including MRNs, SSNs, email addresses, phone numbers, and patient names before any outbound transmission.
-- **HMAC-SHA256 Audit Trail:** Cryptographically signed, tamper-evident audit log chain for all task evaluations. Set `AUDIT_SECRET_KEY` environment variable for production deployments.
-- **Input Validation:** All boundary calculation and re-estimation functions validate parameters and raise descriptive errors for invalid inputs.
-
----
-
-## Running Tests
-
-Run the test suite using standard `pytest`:
+For development tests:
 
 ```bash
-pytest -v
+python -m pip install -e ".[test]"
+python -m pytest -q
 ```
 
-The test suite includes:
-- `tests/test_adaptive_trial.py` — Core adaptive trial functionality, CLI, and boundary calculations
-- `tests/test_enrichment.py` — Enrichment engine feature tests
-- `tests/test_security_and_validation.py` — Security (PHI guard, audit trail) and input validation tests
+For the optional API server:
 
+```bash
+python -m pip install -e ".[server]"
+adaptive-trial serve
+```
+
+## Command-line examples
+
+Calculate five equally spaced O'Brien-Fleming boundaries:
+
+```bash
+adaptive-trial boundaries --method obf --alpha 0.05 --looks 5
+```
+
+Use custom information fractions:
+
+```bash
+adaptive-trial boundaries --method pocock --alpha 0.05 --looks 4 --fractions 0.2,0.45,0.7,1
+```
+
+Calculate a Lan-DeMets spending schedule:
+
+```bash
+adaptive-trial spending --method obf --alpha 0.05 --fractions 0.25,0.5,0.75,1
+```
+
+Calculate conditional power from an interim Z statistic:
+
+```bash
+adaptive-trial futility --interim-z 1.4 --information-fraction 0.5 --threshold 0.1
+```
+
+Batch-process the included design examples:
+
+```bash
+adaptive-trial batch -i sample.csv -o results.csv
+```
+
+Use `--json` with the `boundaries`, `spending`, `futility`, or `ssr` commands for machine-readable output.
+
+## Statistical notes
+
+Boundary calibration controls the requested two-sided Type I error across the supplied interim looks under the canonical group-sequential model. O'Brien-Fleming boundaries are represented by a constant Brownian-scale boundary, producing stringent early Z thresholds that decrease toward the final analysis. Pocock boundaries use a constant Z threshold across looks. Lan-DeMets spending is implemented separately and is useful when the actual information fractions differ from the originally planned timing.
+
+The conditional-power and sample-size re-estimation functions are compact analytical utilities, not a complete adaptive-design package. They do not replace a protocol-specific simulation study, statistical analysis plan, independent data monitoring process, or regulatory review. Trial adaptations should be prospectively specified and their operating characteristics evaluated before use in a confirmatory study.
+
+## Technology and compatibility
+
+The core library uses only the Python standard library. The optional API requires FastAPI and Uvicorn. The browser application uses plain HTML, CSS, and JavaScript with no external runtime assets and is intended for current versions of Chrome, Edge, Firefox, and Safari.
+
+## License
+
+MIT License. See `LICENSE`.
