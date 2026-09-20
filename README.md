@@ -1,5 +1,7 @@
 # Adaptive Trial Interim Stopping
 
+### [Open the Live Application →](https://abusuraihsakhri.github.io/adaptive-trial-interim-stopping/)
+
 A Python library, command-line tool, and browser calculator for group-sequential efficacy boundaries and interim-monitoring calculations in clinical trials.
 
 The statistical core uses the canonical joint-normal/Brownian-motion model to calibrate two-sided O'Brien-Fleming and Pocock efficacy boundaries for the requested alpha level, number of looks, and information fractions. It also provides Lan-DeMets alpha-spending functions, conditional-power calculations, and simple sample-size re-estimation utilities.
@@ -17,7 +19,11 @@ The statistical core uses the canonical joint-normal/Brownian-motion model to ca
 
 ## Browser application
 
-The browser application is in `web/`. All calculations run in the browser; entered values are not sent to a server by the application. The only browser storage used is `localStorage` for the light/dark theme preference.
+The deployed browser calculator is available at:
+
+https://abusuraihsakhri.github.io/adaptive-trial-interim-stopping/
+
+Its source is in `web/`. All calculations run in the browser; entered values are not sent to a server by the application. The only browser storage used is `localStorage` for the light/dark theme preference.
 
 ## Installation
 
