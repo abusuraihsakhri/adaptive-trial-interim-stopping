@@ -2,36 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [master, main]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
+
+permissions:
+  contents: read
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
-
+        python-version: ["3.10", "3.12", "3.13"]
     steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install test dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pytest
-
-    - name: Run Test Suite
-      run: |
-        pytest -v
-
-    - name: Verify CLI Smoke Test
-      run: |
-        python -m adaptive_trial.cli audit --task-id SMOKE-01 --json
-        python -m adaptive_trial.cli batch -i sample.csv -o test_results.csv
-
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install package and tests
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+      - name: Run tests
+        run: python -m pytest -q
+      - name: CLI smoke tests
+        run: |
+          adaptive-trial boundaries --method obf --looks 5 --json > /tmp/boundaries.json
+          adaptive-trial spending --method pocock --fractions 0.25,0.5,0.75,1 --json > /tmp/spending.json
+          adaptive-trial batch -i sample.csv -o /tmp/results.csv

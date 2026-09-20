@@ -1,27 +1,35 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "adaptive-trial-interim-stopping"
-version = "2.0.0"
-description = "AdaptiveTrial-Mind: O'Brien-Fleming & Pocock Interim Stopping Boundary"
+version = "3.0.0"
+description = "Group-sequential efficacy boundaries and interim-monitoring utilities for adaptive trials"
 readme = "README.md"
-authors = [{ name = "Dr. Abu Suraih Sakhri", email = "abusuraih@example.com" }]
 license = { text = "MIT" }
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Topic :: Security/Cryptography",
-    "Topic :: Scientific/Engineering :: Artificial Intelligence",
-]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = []
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Mathematics",
+]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
+test = ["pytest>=8,<10"]
 
 [project.scripts]
+adaptive-trial = "adaptive_trial.cli:main"
 adaptive-trial-interim-stopping = "adaptive_trial.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/abusuraihsakhri/adaptive-trial-interim-stopping"
-Repository = "https://github.com/abusuraihsakhri/adaptive-trial-interim-stopping.git"
+Repository = "https://github.com/abusuraihsakhri/adaptive-trial-interim-stopping"
+
+[tool.setuptools]
+py-modules = ["adaptive_boundaries"]
+
+[tool.setuptools.packages.find]
+include = ["adaptive_trial*"]
